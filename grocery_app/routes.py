@@ -103,6 +103,25 @@ def item_detail(item_id):
     return render_template('item_detail.html', item=item, form=form)
 
 
+@main.route('/add_to_shopping_list/<item_id>', methods = ['POST'])
+def add_to_shopping_list(item_id):
+    item = GroceryItem.query.filter_by(id=item_id).one()
+    user = User.query.filter_by(username=current_user.username).one()
+    user.shopping_list_items.append(GroceryItem.query.filter_by(id=item_id).one())
+    
+    db.session.add(item)
+    db.session.commit()
+
+    flash('item added to cart')
+    return redirect(url_for('main.item_detail', item_id = item.id))
+
+
+@main.route('/shopping_list')
+@login_required
+    item = GroceryItem.query.join(GroceryItem.user_items).filter_by(id=current_user.id).all()
+    return render_template('shopping_list.html', items=item)
+
+
 ##########################################
 #         Authentication  Routes         #
 ##########################################
