@@ -1,7 +1,7 @@
 from sqlalchemy_utils import URLType
-
 from grocery_app import db
 from grocery_app.utils import FormEnum
+from flask_login import UserMixin
 
 class ItemCategory(FormEnum):
     """Categories of grocery items."""
@@ -18,6 +18,8 @@ class GroceryStore(db.Model):
     title = db.Column(db.String(80), nullable=False)
     address = db.Column(db.String(200), nullable=False)
     items = db.relationship('GroceryItem', back_populates='store')
+    created_by_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    created_by = db.relationship('User')        
 
     def __str__(self):
         return str(self.title)
@@ -31,3 +33,19 @@ class GroceryItem(db.Model):
     photo_url = db.Column(URLType)
     store_id = db.Column(db.Integer, db.ForeignKey('grocery_store.id'), nullable=False)
     store = db.relationship('GroceryStore', back_populates='items')
+    created_by_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    created_by = db.relationship('User')
+
+class User(db.Model, UserMixin):
+    """User model."""
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(50), nullable=False)
+    password = db.Column(db.String(150), nullable=False)
+    shopping_list_items = db.relationship('GroceryItem', secondary='shopping_list', back_populates = 'shopping_lists')
+    def __str__(self):
+        return f'{self.username}'
+
+shopping_list_table = db.Table('shopping_list',
+    db.Column('groceryitem_id', db.Integer, db.ForeignKey('groceryitem.id')),
+    db.Column('user_id', db.Integer, db.ForeignKey('user.id'))
+)
